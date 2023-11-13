@@ -1,239 +1,101 @@
-import oracledb 
-
-def tabela_existe(nome_tabela):
-    try:
-        connection = obter_connection()
-        cursor = connection.cursor()
-
-        # Consulta para verificar a existência da tabela
-        sql_query = f"SELECT table_name FROM user_tables WHERE table_name = '{nome_tabela.upper()}'"
-        cursor.execute(sql_query)
-
-        # Verifique se a tabela foi encontrada
-        return cursor.fetchone() is not None
-    except Exception as e:
-        print(f"Erro ao verificar a existência da tabela: {e}")
-        return False
-    finally:
-        close_connection(connection)
+import oracledb
 
 def obter_connection():
     try:
-        connection = oracledb.connect(user="RM99585", password="210305", host="oracle.fiap.com.br", port=1521, service_name="orcl")
+        connection = oracledb.connect(user="RM99585", password="210305", dsn="oracle.fiap.com.br/orcl")
         return connection
     except Exception as e:
         print(f"Erro ao obter conexão: {e}")
         return None
 
-def criar_tabela_cadastro_pessoa_fisica():
+def close_connection(connection):
     try:
-        connection = obter_connection()
-        cursor = connection.cursor()
+        if connection:
+            connection.close()
+    except Exception as e:
+        print (f"Erro ao fechar conexão:{e}" )
+
+def insert(dados_cadastro, bike, acessorio):
+    connection = obter_connection()
+    cursor = connection.cursor()
+# Inserir dados tabela T_MGT_CLIENTE
+    try:
         sql_query = """
-        CREATE TABLE T_MGT_CADASTRO_PESSOA_FISICA (
-            NM_CLIENTE VARCHAR2(100) NOT NULL,
-            NR_CPF VARCHAR2(11) NOT NULL,
-            NM_ENDEREÇO VARCHAR2(100) NOT NULL,
-            NR_TELEFONE VARCHAR2(20) NOT NULL,
-            NM_EMAIL VARCHAR2(100) NOT NULL,
-            DT_NASCIMENTO DATE NOT NULL
-        )
+        INSERT INTO T_MGT_CLIENTE (TP_CLIENTE)
+        VALUES ('FISICA')
         """
-        cursor.execute(sql_query)
+        cursor.execute(sql_query, {
+        })
         connection.commit()
-        print("Tabela CADASTRO criada com sucesso.")
+        print("Dados de CLIENTE inseridos com sucesso.")
     except Exception as e:
-        print(f"Erro ao criar tabela: {e}")
-    finally:
-        close_connection(connection)
-
-def criar_tabela_cadastro_pessoa_juridica():
+        print(f"Erro ao inserir dados de CLIENTE na tabela: {e}")
+# Inserir dados tabela T_MGT_PESSOA_FISICA
     try:
-        connection = obter_connection()
-        cursor = connection.cursor()
         sql_query = """
-        CREATE TABLE CADASTRO_PESSOA_JURIDICA (
-            NM_EMPRESA VARCHAR2(100) NOT NULL,
-            NR_CPF NUMERIC(11) NOT NULL,
-            NM_ENDERECO VARCHAR2(100) NOT NULL,
-            NR_TELEFONE VARCHAR2(20) NOT NULL,
-            NM_EMAIL VARCHAR2(100) NOT NULL,
-            DT_FUNDACAO DATE NOT NULL
-        )
-        """
-        cursor.execute(sql_query)
-        connection.commit()
-        print("Tabela CADASTRO criada com sucesso.")
-    except Exception as e:
-        print(f"Erro ao criar tabela: {e}")
-    finally:
-        close_connection(connection)
-
-def criar_tabela_bike():
-    try:
-        connection = obter_connection()
-        cursor = connection.cursor()
-        sql_query = """
-        CREATE TABLE T_MGT_BIKE (
-            NM_MARCA VARCHAR2(50) NOT NULL,
-            NR_REGISTRO VARCHAR2 (20) NOT NULL,
-            NM_COR VARCHAR2(20) NOT NULL,
-            DT_BIKE VARCHAR2(4) NOT NULL,
-            VL_MERCADO VARCHAR2 (15) NOT NULL,
-            NM_FUNCAO VARCHAR2(30) NOT NULL,
-            NM_MODELO VARCHAR(30) NOT NULL
-         )
-        """
-        cursor.execute(sql_query)
-        connection.commit()
-        print("Tabela BIKE criada com sucesso.")
-    except Exception as e:
-        print(f"Erro ao criar tabela: {e}")
-    finally:
-        close_connection(connection)
-
-def criar_tabela_acessorio():
-    try:
-        connection = obter_connection()
-        cursor = connection.cursor()
-        cursor.execute('''
-            CREATE TABLE acessorios (
-                id NUMBER PRIMARY KEY,
-                nome VARCHAR2(255),
-                preco NUMBER
-            )
-        ''')
-        connection.commit()
-        cursor.close()
-        print("Tabela CADASTRO criada com sucesso.")
-    except Exception as e:
-        print(f"Erro ao criar tabela: {e}")
-    finally:
-        close_connection(connection)
-
-def select_cadastro():
-    try:
-        connection = obter_connection()
-        cursor = connection.cursor()
-        sql_query = "SELECT * FROM CT_MGT_CADASTRO_PESSOA_FISICA" 
-        cursor.execute(sql_query)
-        for result in cursor:
-            print(result)
-    except Exception as e:
-        print(f"{e}")
-    finally:
-        close_connection(connection)
-
-def select_bike():
-    try:
-        connection = obter_connection()
-        cursor = connection.cursor()
-        sql_query = "SELECT * FROM T_MGT_BIKE"
-        cursor.execute(sql_query)
-        for result in cursor:
-            print(result)
-    except Exception as e:
-        print(f"{e}")
-    finally:
-        close_connection(connection)
-
-def inserir_dados_cadastro_pessoa_fisica(dados_cadastro):
-    try:
-        connection = obter_connection()
-        cursor = connection.cursor()
-        sql_query = """
-        INSERT INTO T_MGT_CADASTRO_PESSOA_FISICA (NM_CLIENTE, NR_CPF, NM_ENDEREÇO, NR_TELEFONE, NM_EMAIL, DT_NASCIMENTO) 
-        VALUES (:nome, :cpf, :endereco, :telefone, :email, :nascimento)
+        INSERT INTO T_MGT_PESSOA_FISICA (ID_CLIENTE, NM_USUARIO, NR_CPF, NR_CEP,NM_UF, NM_LOCALIDADE, NM_LOGRADORO, NR_TELEFONE, NM_EMAIL, DT_NASCIMENTO)
+        VALUES (SEQ_ID_CLIENTE.CURRVAL, :nome, :cpf, :endereco, :uf, :localidade, :logradoro, :telefone, :email, TO_DATE(:nascimento, 'DD/MM/YYYY'))
         """
         cursor.execute(sql_query, {
             'nome': dados_cadastro['Nome'],
             'cpf': dados_cadastro['Cpf'],
             'endereco': dados_cadastro['Endereço'],
+            'uf': dados_cadastro['UF'],
+            'localidade': dados_cadastro['Cidade'],
+            'logradoro': dados_cadastro['logradoro'],
             'telefone': dados_cadastro['Telefone'],
             'email': dados_cadastro['E-mail'],
             'nascimento': dados_cadastro['Data de Nascimento']
         })
         connection.commit()
-        print("Dados inseridos com sucesso.")
+        print("Dados de pessoa física inseridos com sucesso.")
     except Exception as e:
-        print(f"Erro ao inserir dados na tabela: {e}")
-    finally:
-        close_connection(connection)
+        if "ORA-00001" in str(e):
+            print("Erro: Violation of unique constraint. CPF já cadastrado.")
+        else:
+            print(f"Erro ao inserir dados de pessoa física na tabela: {e}")
 
-def inserir_dados_pessoa_juridica(dados_juridicos):
-    try:
-        connection = obter_connection()
-        cursor = connection.cursor()
-        
+# Inserir dados tabela T_MGT_BIKE
+    try:     
         sql_query = """
-        INSERT INTO CADASTRO_PESSOA_JURIDICA (NM_EMPRESA, NR_CNPJ, NM_ENDERECO, NR_TELEFONE, NM_EMAIL, DT_FUNDACAO)
-        VALUES (:nome_empresa, :cnpj, :endereco, :telefone, :email, :data_fundacao)
+            INSERT INTO T_MGT_BIKE (ID_CLIENTE, ID_BIKE, NM_MARCA, NR_REGISTRO, NM_COR, DT_BIKE, VL_MERCADO, TP_FUNCAO, TP_MODELO)
+            VALUES (SEQ_ID_CLIENTE.CURRVAL, SEQ_ID_BIKE.NEXTVAL, :marca, :registro, :cor, :data_bike, :valor_mercado, :funcao, :modelo)
         """
         cursor.execute(sql_query, {
-            'nome_empresa': dados_juridicos['Nome'],
-            'cnpj': dados_juridicos['Cnpj'],
-            'endereco': dados_juridicos['Endereço'],
-            'telefone': dados_juridicos['Telefone'],
-            'email': dados_juridicos['E-mail'],
-            'data_fundacao': dados_juridicos['Data de Fundação']
+            'marca': bike['Marca'],
+            'registro': bike['registro'],
+            'cor': bike['Cor'],
+            'data_bike': bike['Ano_bike'],
+            'valor_mercado': bike['Valor Mercado'],
+            'funcao': bike['Função'],
+            'modelo': bike['Modelo'],
         })
-
-        connection.commit()
-        print("Dados de pessoa jurídica inseridos com sucesso.")
-    except Exception as e:
-        print(f"Erro ao inserir dados de pessoa jurídica na tabela: {e}")
-    finally:
-        close_connection(connection)
-
-def inserir_dados_bike(dados_bike):
-    try:
-        connection = obter_connection()
-        cursor = connection.cursor()
-
-        for bike in dados_bike:
-            cores = bike['cores']
-            for cor in cores:
-                sql_query = sql_query = """
-                INSERT INTO T_MGT_BIKE (NM_MARCA, NR_REGISTRO, NM_COR, DT_BIKE, VL_MERCADO, NM_FUNCAO, NM_MODELO) 
-                VALUES (:marca, :registro, :cor, :data_bike,  :valor_mercado, :funcao, :modelo)
-                """
-                cursor.execute(sql_query, {
-                'marca': bike['Marca'],
-                'registro': bike['Numeracao'],
-                'cor': ', '.join(cores),
-                'data_bike': bike['Ano'],
-                'valor_mercado': bike['Valor de Mercado'],
-                'funcao': bike['Função'],
-                'modelo': bike['Modelo']
-                })
-
         connection.commit()
         print("Dados da bicicleta inseridos com sucesso.")
     except Exception as e:
-        print(f"Erro ao inserir dados na tabela: {e}")
-    finally:
-        close_connection(connection)
-
-def inserir_acessorios_bike(lista_acessorios):
-    try:
-        connection = obter_connection()
-        cursor = connection.cursor()
-        
+        if "ORA-00001" in str(e):
+            print("Erro: Violation of unique constraint. ID_BIKE já cadastrado.")
+        else:
+            print(f"Erro ao inserir dados da bike na tabela: {e}")
+    
+# Inserir dados tabela T_MGT_ACESSORIO
+    try:     
         sql_query = """
-        INSERT INTO CADASTRO_PESSOA_JURIDICA (NR_PRECO, NM_ACESSORIO)
-        VALUES (:preco, :nome)
+            INSERT INTO T_MGT_ACESSORIO (ID_ACESSORIO, ID_BIKE, NM_ACESSORIO, VL_ACESSORIO)
+            VALUES (SEQ_ID_ACESSORIO.NEXTVAL, SEQ_ID_BIKE.CURRVAL, :acessorio, :preco)
         """
-        cursor.execute(sql_query, {
-            'nome_acessorio': lista_acessorios ['acessorio'],
-            'preco': lista_acessorios['preco']
-        })
-
+        for acessorio_dict in acessorio:
+            cursor.execute(sql_query, {
+                'acessorio': acessorio_dict['Acessório'],
+                'preco': acessorio_dict['Preço'],
+            })
+        
         connection.commit()
-        print("Dados de pessoa jurídica inseridos com sucesso.")
+        print("Dados dos acessórios inseridos com sucesso.")
     except Exception as e:
-        print(f"Erro ao inserir dados de pessoa jurídica na tabela: {e}")
-    finally:
-        close_connection(connection)
+        if "ORA-00001" in str(e):
+            print("Erro: Violation of unique constraint. ID_ACESSORIO já cadastrado.")
+        else:
+            print(f"Erro ao inserir dados acessorios na tabela física na tabela: {e}")
 
-def close_connection(connection):
-    connection.close()
+    close_connection(connection)
